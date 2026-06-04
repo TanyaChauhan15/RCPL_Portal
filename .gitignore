@@ -1,0 +1,13 @@
+# Frontend
+rcpl-dashboard/node_modules
+rcpl-dashboard/dist
+
+# Backend
+rcpl-backend/node_modules
+
+# Environment files
+rcpl-backend/.env
+
+# OS files
+.DS_Store
+Thumbs.db
