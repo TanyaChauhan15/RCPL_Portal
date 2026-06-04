@@ -6,7 +6,7 @@ export default function HR({ setPage, handleLogout, currentUser }) {
   const [dashboards, setDashboards] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/dashboards")
+    fetch("https://rcpl-portal.onrender.com/dashboards")
       .then((res) => res.json())
       .then((data) => {
         const hrDashboards = data.filter(

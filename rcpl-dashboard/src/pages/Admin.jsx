@@ -38,19 +38,19 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
   });
 
   const fetchDashboards = async () => {
-    const res = await fetch("http://localhost:5000/dashboards");
+    const res = await fetch("https://rcpl-portal.onrender.com/dashboards");
     const data = await res.json();
     setDashboards(data);
   };
 
   const fetchUsers = async () => {
-    const res = await fetch("http://localhost:5000/users");
+    const res = await fetch("https://rcpl-portal.onrender.com/users");
     const data = await res.json();
     setUsers(data);
   };
 
   const fetchCategories = async () => {
-  const res = await fetch("http://localhost:5000/categories");
+  const res = await fetch("https://rcpl-portal.onrender.com/categories");
   const data = await res.json();
   setCategories(data);
  };
@@ -92,8 +92,8 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
     }
 
     const url = editingDashboardId
-      ? `http://localhost:5000/dashboards/${editingDashboardId}`
-      : "http://localhost:5000/dashboards";
+      ? `https://rcpl-portal.onrender.com/dashboards/${editingDashboardId}`
+      : "https://rcpl-portal.onrender.com/dashboards";
 
     const method = editingDashboardId ? "PUT" : "POST";
 
@@ -127,7 +127,7 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
   const deleteDashboard = async (id) => {
     if (!window.confirm("Delete this dashboard?")) return;
 
-    await fetch(`http://localhost:5000/dashboards/${id}`, {
+    await fetch(`https://rcpl-portal.onrender.com/dashboards/${id}`, {
       method: "DELETE",
     });
 
@@ -141,8 +141,8 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
     }
 
     const url = editingUserId
-      ? `http://localhost:5000/users/${editingUserId}`
-      : "http://localhost:5000/users";
+      ? `https://rcpl-portal.onrender.com/users/${editingUserId}`
+      : "https://rcpl-portal.onrender.com/users";
 
     const method = editingUserId ? "PUT" : "POST";
 
@@ -180,7 +180,7 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
   const deleteUser = async (id) => {
     if (!window.confirm("Disable this user?")) return;
 
-    await fetch(`http://localhost:5000/users/${id}`, {
+    await fetch(`https://rcpl-portal.onrender.com/users/${id}`, {
       method: "DELETE",
     });
 
@@ -189,8 +189,8 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
 
   const saveCategory = async () => {
     const url = editingCategoryId
-      ? `http://localhost:5000/categories/${editingCategoryId}`
-      : "http://localhost:5000/categories";
+      ? `https://rcpl-portal.onrender.com/categories/${editingCategoryId}`
+      : "https://rcpl-portal.onrender.com/categories";
 
     const method = editingCategoryId ? "PUT" : "POST";
 
@@ -223,7 +223,7 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
 
     const deleteCategory = async (id) => {
       await fetch(
-        `http://localhost:5000/categories/${id}`,
+        `https://rcpl-portal.onrender.com/categories/${id}`,
        {
         method: "DELETE",
        }

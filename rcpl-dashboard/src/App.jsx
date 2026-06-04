@@ -20,7 +20,7 @@ export default function App() {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch("http://localhost:5000/login", {
+      const response = await fetch("https://rcpl-portal.onrender.com/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
