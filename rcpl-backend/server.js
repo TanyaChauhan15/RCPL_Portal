@@ -34,6 +34,16 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+const requireAdmin = (req, res, next) => {
+  if (req.user.role !== "ADMIN") {
+    return res.status(403).json({
+      message: "Admin access required",
+    });
+  }
+
+  next();
+};
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
@@ -114,7 +124,7 @@ app.get("/categories", async (req, res) => {
   res.json(data);
 });
 
-app.post("/categories", authenticateToken, async (req, res) => {
+app.post("/categories", authenticateToken, requireAdmin, async (req, res) => {
   const { department, category_name } = req.body;
 
   const { data, error } = await supabase
@@ -135,7 +145,7 @@ app.post("/categories", authenticateToken, async (req, res) => {
   res.json(data);
 });
 
-app.put("/categories/:id", authenticateToken, async (req, res) => {
+app.put("/categories/:id", authenticateToken, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { department, category_name } = req.body;
 
@@ -155,7 +165,7 @@ app.put("/categories/:id", authenticateToken, async (req, res) => {
   res.json(data);
 });
 
-app.delete("/categories/:id", authenticateToken, async (req, res) => {
+app.delete("/categories/:id", authenticateToken,requireAdmin, async (req, res) => {
   const { id } = req.params;
 
   const { data, error } = await supabase
@@ -189,7 +199,7 @@ app.get("/users", authenticateToken, async (req, res) => {
 });
 
 // ADD USER
-app.post("/users", authenticateToken, async (req, res) => {
+app.post("/users", authenticateToken,requireAdmin, async (req, res) => {
   const {
     name,
     email,
@@ -227,12 +237,20 @@ app.post("/users", authenticateToken, async (req, res) => {
 });
 
 // EDIT USER
-app.put("/users/:id", authenticateToken, async (req, res) => {
+app.put("/users/:id", authenticateToken, requireAdmin, async (req, res) => {
   const { id } = req.params;
+
+  const updateData = { ...req.body };
+
+  if (updateData.password) {
+    updateData.password = await bcrypt.hash(updateData.password, 10);
+  } else {
+    delete updateData.password;
+  }
 
   const { data, error } = await supabase
     .from("users")
-    .update(req.body)
+    .update(updateData)
     .eq("id", id)
     .select();
 
@@ -240,11 +258,12 @@ app.put("/users/:id", authenticateToken, async (req, res) => {
     return res.status(500).json({ message: "Failed to update user", error });
   }
 
+  delete data[0].password;
   res.json(data[0]);
 });
 
 // DELETE / DISABLE USER
-app.delete("/users/:id", authenticateToken, async (req, res) => {
+app.delete("/users/:id", authenticateToken, requireAdmin, async (req, res) => {
   const { id } = req.params;
 
   const { error } = await supabase
@@ -259,7 +278,7 @@ app.delete("/users/:id", authenticateToken, async (req, res) => {
   res.json({ message: "User disabled successfully" });
 });
 
-app.post("/dashboards", authenticateToken, async (req, res) => {
+app.post("/dashboards", authenticateToken,requireAdmin,  async (req, res) => {
   const {
     dashboard_name,
     department,
@@ -291,7 +310,7 @@ app.post("/dashboards", authenticateToken, async (req, res) => {
   res.json(data[0]);
 });
 
-app.put("/dashboards/:id", authenticateToken, async (req, res) => {
+app.put("/dashboards/:id", authenticateToken, requireAdmin, async (req, res) => {
   const { id } = req.params;
 
   const { data, error } = await supabase
@@ -307,7 +326,7 @@ app.put("/dashboards/:id", authenticateToken, async (req, res) => {
   res.json(data[0]);
 });
 
-app.delete("/dashboards/:id", authenticateToken, async (req, res) => {
+app.delete("/dashboards/:id", authenticateToken, requireAdmin, async (req, res) => {
   const { id } = req.params;
 
   const { error } = await supabase
