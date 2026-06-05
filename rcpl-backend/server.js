@@ -3,6 +3,8 @@ const cors = require("cors");
 require("dotenv").config();
 
 const { createClient } = require("@supabase/supabase-js");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 
@@ -21,23 +23,43 @@ app.get("/", (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  const { data, error } = await supabase
+  const { data: user, error } = await supabase
     .from("users")
     .select("*")
     .eq("email", email)
-    .eq("password", password)
     .eq("active", true)
     .single();
 
-  if (error || !data) {
+  if (error || !user) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+
+  const token = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+
+  delete user.password;
+
   res.json({
     message: "Login successful",
-    user: data,
+    token,
+    user,
   });
 });
+
+
 
 app.get("/dashboards", async (req, res) => {
   const { data, error } = await supabase
@@ -150,11 +172,12 @@ app.post("/users", async (req, res) => {
     email,
     username,
     password,
-    department,
-    category,
+    departments,
     manager,
     role,
   } = req.body;
+
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   const { data, error } = await supabase
     .from("users")
@@ -163,9 +186,8 @@ app.post("/users", async (req, res) => {
         name,
         email,
         username,
-        password,
-        department,
-        category,
+        password: hashedPassword,
+        departments,
         manager,
         role,
         active: true,
@@ -177,6 +199,7 @@ app.post("/users", async (req, res) => {
     return res.status(500).json({ message: "Failed to add user", error });
   }
 
+  delete data[0].password;
   res.json(data[0]);
 });
 
