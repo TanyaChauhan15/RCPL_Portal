@@ -11,6 +11,29 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({
+      message: "Access token required",
+    });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({
+        message: "Invalid token",
+      });
+    }
+
+    req.user = user;
+    next();
+  });
+};
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
@@ -91,7 +114,7 @@ app.get("/categories", async (req, res) => {
   res.json(data);
 });
 
-app.post("/categories", async (req, res) => {
+app.post("/categories", authenticateToken, async (req, res) => {
   const { department, category_name } = req.body;
 
   const { data, error } = await supabase
@@ -112,7 +135,7 @@ app.post("/categories", async (req, res) => {
   res.json(data);
 });
 
-app.put("/categories/:id", async (req, res) => {
+app.put("/categories/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const { department, category_name } = req.body;
 
@@ -132,7 +155,7 @@ app.put("/categories/:id", async (req, res) => {
   res.json(data);
 });
 
-app.delete("/categories/:id", async (req, res) => {
+app.delete("/categories/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
 
   const { data, error } = await supabase
@@ -151,7 +174,7 @@ app.delete("/categories/:id", async (req, res) => {
 });
 
 // GET ALL ACTIVE USERS
-app.get("/users", async (req, res) => {
+app.get("/users", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
     .from("users")
     .select("*")
@@ -166,7 +189,7 @@ app.get("/users", async (req, res) => {
 });
 
 // ADD USER
-app.post("/users", async (req, res) => {
+app.post("/users", authenticateToken, async (req, res) => {
   const {
     name,
     email,
@@ -204,7 +227,7 @@ app.post("/users", async (req, res) => {
 });
 
 // EDIT USER
-app.put("/users/:id", async (req, res) => {
+app.put("/users/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
 
   const { data, error } = await supabase
@@ -221,7 +244,7 @@ app.put("/users/:id", async (req, res) => {
 });
 
 // DELETE / DISABLE USER
-app.delete("/users/:id", async (req, res) => {
+app.delete("/users/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
 
   const { error } = await supabase
@@ -236,7 +259,7 @@ app.delete("/users/:id", async (req, res) => {
   res.json({ message: "User disabled successfully" });
 });
 
-app.post("/dashboards", async (req, res) => {
+app.post("/dashboards", authenticateToken, async (req, res) => {
   const {
     dashboard_name,
     department,
@@ -268,7 +291,7 @@ app.post("/dashboards", async (req, res) => {
   res.json(data[0]);
 });
 
-app.put("/dashboards/:id", async (req, res) => {
+app.put("/dashboards/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
 
   const { data, error } = await supabase
@@ -284,7 +307,7 @@ app.put("/dashboards/:id", async (req, res) => {
   res.json(data[0]);
 });
 
-app.delete("/dashboards/:id", async (req, res) => {
+app.delete("/dashboards/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
 
   const { error } = await supabase
