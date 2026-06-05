@@ -6,18 +6,25 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
 
   const [dashboards, setDashboards] = useState([]);
   const [users, setUsers] = useState([]);
-
   const [categories, setCategories] = useState([]);
 
   const [editingCategoryId, setEditingCategoryId] = useState(null);
-
-  const [categoryForm, setCategoryForm] = useState({
-  department: "",
-  category_name: "",
-  });
-
   const [editingDashboardId, setEditingDashboardId] = useState(null);
   const [editingUserId, setEditingUserId] = useState(null);
+
+  const getAuthHeaders = () => ({
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  });
+
+  const getDeleteHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  });
+
+  const [categoryForm, setCategoryForm] = useState({
+    department: "",
+    category_name: "",
+  });
 
   const [form, setForm] = useState({
     dashboard_name: "",
@@ -44,16 +51,18 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
   };
 
   const fetchUsers = async () => {
-    const res = await fetch("https://rcpl-portal.onrender.com/users");
+    const res = await fetch("https://rcpl-portal.onrender.com/users", {
+      headers: getDeleteHeaders(),
+    });
     const data = await res.json();
-    setUsers(data);
+    setUsers(Array.isArray(data) ? data : []);
   };
 
   const fetchCategories = async () => {
-  const res = await fetch("https://rcpl-portal.onrender.com/categories");
-  const data = await res.json();
-  setCategories(data);
- };
+    const res = await fetch("https://rcpl-portal.onrender.com/categories");
+    const data = await res.json();
+    setCategories(data);
+  };
 
   useEffect(() => {
     fetchDashboards();
@@ -86,7 +95,13 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
   };
 
   const saveDashboard = async () => {
-    if (!form.dashboard_name || !form.department || !form.category || !form.platform || !form.dashboard_url) {
+    if (
+      !form.dashboard_name ||
+      !form.department ||
+      !form.category ||
+      !form.platform ||
+      !form.dashboard_url
+    ) {
       alert("Please fill all required dashboard fields");
       return;
     }
@@ -99,7 +114,7 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
 
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(form),
     });
 
@@ -129,13 +144,21 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
 
     await fetch(`https://rcpl-portal.onrender.com/dashboards/${id}`, {
       method: "DELETE",
+      headers: getDeleteHeaders(),
     });
 
     fetchDashboards();
   };
 
   const saveUser = async () => {
-    if (!userForm.name || !userForm.email || !userForm.username || !userForm.password || !userForm.department || !userForm.role) {
+    if (
+      !userForm.name ||
+      !userForm.email ||
+      !userForm.username ||
+      !userForm.password ||
+      !userForm.department ||
+      !userForm.role
+    ) {
       alert("Please fill all user fields");
       return;
     }
@@ -148,11 +171,15 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
 
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
-        ...userForm,
-        category: "",
+        name: userForm.name,
+        email: userForm.email,
+        username: userForm.username,
+        password: userForm.password,
+        departments: [userForm.department],
         manager: "Admin",
+        role: userForm.role,
       }),
     });
 
@@ -171,8 +198,8 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
       name: user.name || "",
       email: user.email || "",
       username: user.username || "",
-      password: user.password || "",
-      department: user.department || "",
+      password: "",
+      department: user.departments?.[0] || "",
       role: user.role || "USER",
     });
   };
@@ -182,6 +209,7 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
 
     await fetch(`https://rcpl-portal.onrender.com/users/${id}`, {
       method: "DELETE",
+      headers: getDeleteHeaders(),
     });
 
     fetchUsers();
@@ -196,9 +224,7 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
 
     await fetch(url, {
       method,
-      headers: {
-      "Content-Type": "application/json",
-    },
+      headers: getAuthHeaders(),
       body: JSON.stringify(categoryForm),
     });
 
@@ -208,29 +234,26 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
     });
 
     setEditingCategoryId(null);
-
     fetchCategories();
-    };
+  };
 
-    const editCategory = (cat) => {
-      setEditingCategoryId(cat.id);
+  const editCategory = (cat) => {
+    setEditingCategoryId(cat.id);
 
-      setCategoryForm({
+    setCategoryForm({
       department: cat.department,
       category_name: cat.category_name,
-      });
-    };
+    });
+  };
 
-    const deleteCategory = async (id) => {
-      await fetch(
-        `https://rcpl-portal.onrender.com/categories/${id}`,
-       {
-        method: "DELETE",
-       }
-      );
+  const deleteCategory = async (id) => {
+    await fetch(`https://rcpl-portal.onrender.com/categories/${id}`, {
+      method: "DELETE",
+      headers: getDeleteHeaders(),
+    });
 
-      fetchCategories();
-   };
+    fetchCategories();
+  };
 
   return (
     <div className="sales-page">
@@ -242,8 +265,12 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
         />
 
         <div className="nav-title">
-          <p>Home <span>›</span> Admin</p>
-          <h1><span>Admin</span> Panel</h1>
+          <p>
+            Home <span>›</span> Admin
+          </p>
+          <h1>
+            <span>Admin</span> Panel
+          </h1>
         </div>
 
         <div className="sales-nav-right">
@@ -261,27 +288,27 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
       </div>
 
       <div className="admin-tabs">
-  <button
-    className={activeTab === "dashboard" ? "active-tab" : ""}
-    onClick={() => setActiveTab("dashboard")}
-  >
-    Dashboard Management
-  </button>
+        <button
+          className={activeTab === "dashboard" ? "active-tab" : ""}
+          onClick={() => setActiveTab("dashboard")}
+        >
+          Dashboard Management
+        </button>
 
-  <button
-    className={activeTab === "user" ? "active-tab" : ""}
-    onClick={() => setActiveTab("user")}
-  >
-    User Management
-  </button>
+        <button
+          className={activeTab === "user" ? "active-tab" : ""}
+          onClick={() => setActiveTab("user")}
+        >
+          User Management
+        </button>
 
-  <button
-    className={activeTab === "category" ? "active-tab" : ""}
-    onClick={() => setActiveTab("category")}
-  >
-    Category Management
-  </button>
-</div>
+        <button
+          className={activeTab === "category" ? "active-tab" : ""}
+          onClick={() => setActiveTab("category")}
+        >
+          Category Management
+        </button>
+      </div>
 
       {activeTab === "dashboard" && (
         <>
@@ -317,34 +344,23 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
             <select
               value={form.category}
               disabled={!form.department}
-              onChange={(e) =>
-                setForm({ ...form, category: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
             >
               <option value="">Select Category</option>
 
-                  {categories
-                    .filter(
-                     (cat) =>
-                        cat.department === form.department
-                    )
-                    .map((cat) => (
-                      <option
-                         key={cat.id}
-                         value={cat.category_name}
-                        >
-                         {cat.category_name}
-                      </option>
+              {categories
+                .filter((cat) => cat.department === form.department)
+                .map((cat) => (
+                  <option key={cat.id} value={cat.category_name}>
+                    {cat.category_name}
+                  </option>
                 ))}
-
             </select>
 
             <input
               placeholder="Platform"
               value={form.platform}
-              onChange={(e) =>
-                setForm({ ...form, platform: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, platform: e.target.value })}
             />
 
             <input
@@ -447,6 +463,7 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
 
             <input
               placeholder="Password"
+              type="password"
               value={userForm.password}
               onChange={(e) =>
                 setUserForm({ ...userForm, password: e.target.value })
@@ -507,7 +524,7 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
                     <td>{user.name}</td>
                     <td>{user.username}</td>
                     <td>{user.email}</td>
-                    <td>{user.department}</td>
+                    <td>{user.departments?.join(", ")}</td>
                     <td>{user.role}</td>
                     <td>
                       <button
@@ -532,107 +549,82 @@ export default function Admin({ setPage, handleLogout, currentUser }) {
         </>
       )}
 
-
       {activeTab === "category" && (
-  <>
-    <div className="admin-card">
+        <>
+          <div className="admin-card">
+            <h2>{editingCategoryId ? "Edit Category" : "Add Category"}</h2>
 
-      <h2>
-        {editingCategoryId
-          ? "Edit Category"
-          : "Add Category"}
-      </h2>
+            <select
+              value={categoryForm.department}
+              onChange={(e) =>
+                setCategoryForm({
+                  ...categoryForm,
+                  department: e.target.value,
+                })
+              }
+            >
+              <option value="">Select Department</option>
+              <option value="Sales">Sales</option>
+              <option value="HR">HR</option>
+              <option value="Supply Chain">Supply Chain</option>
+              <option value="Finance">Finance</option>
+              <option value="After Sales">After Sales</option>
+            </select>
 
-      <select
-        value={categoryForm.department}
-        onChange={(e) =>
-          setCategoryForm({
-            ...categoryForm,
-            department: e.target.value,
-          })
-        }
-      >
-        <option value="">
-          Select Department
-        </option>
+            <input
+              placeholder="Category Name"
+              value={categoryForm.category_name}
+              onChange={(e) =>
+                setCategoryForm({
+                  ...categoryForm,
+                  category_name: e.target.value,
+                })
+              }
+            />
 
-        <option value="Sales">Sales</option>
-        <option value="HR">HR</option>
-        <option value="Supply Chain">
-          Supply Chain
-        </option>
-        <option value="Finance">
-          Finance
-        </option>
-        <option value="After Sales">
-          After Sales
-        </option>
-      </select>
+            <button className="admin-add-btn" onClick={saveCategory}>
+              {editingCategoryId ? "Update Category" : "Add Category"}
+            </button>
+          </div>
 
-      <input
-        placeholder="Category Name"
-        value={categoryForm.category_name}
-        onChange={(e) =>
-          setCategoryForm({
-            ...categoryForm,
-            category_name: e.target.value,
-          })
-        }
-      />
+          <div className="admin-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>Category</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
 
-      <button
-        className="admin-add-btn"
-        onClick={saveCategory}
-      >
-        {editingCategoryId
-          ? "Update Category"
-          : "Add Category"}
-      </button>
+              <tbody>
+                {categories.map((cat) => (
+                  <tr key={cat.id}>
+                    <td>{cat.department}</td>
+                    <td>{cat.category_name}</td>
 
-    </div>
+                    <td>
+                      <button
+                        className="edit-btn"
+                        onClick={() => editCategory(cat)}
+                      >
+                        Edit
+                      </button>
 
-    <div className="admin-table">
-      <table>
-        <thead>
-          <tr>
-            <th>Department</th>
-            <th>Category</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {categories.map((cat) => (
-            <tr key={cat.id}>
-              <td>{cat.department}</td>
-              <td>{cat.category_name}</td>
-
-              <td>
-                <button
-                  className="edit-btn"
-                  onClick={() =>
-                    editCategory(cat)
-                  }
-                >
-                  Edit
-                </button>
-
-                <button
-                  className="delete-btn"
-                  onClick={() =>
-                    deleteCategory(cat.id)
-                  }
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </>
-)}
+                      <button
+                        className="delete-btn"
+                        onClick={() => deleteCategory(cat.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }
