@@ -39,7 +39,7 @@ export default function Login({
 
         <button onClick={handleLogin}>Login</button>
 
-        <span className="demo-text">Demo Credentials: admin / 1234</span>
+        
       </div>
     </div>
   );
