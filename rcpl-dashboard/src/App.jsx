@@ -38,7 +38,10 @@ export default function App() {
         return;
       }
 
+
       setCurrentUser(data.user);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
       setLoggedIn(true);
       setPage("home");
     } catch (error) {
@@ -48,6 +51,9 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    
     setLoggedIn(false);
     setPage("home");
     setCurrentUser(null);
